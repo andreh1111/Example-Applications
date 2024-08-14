@@ -9,6 +9,7 @@ USE_ZMQ = True
 
 if USE_ZMQ:
     import zmq
+    import time
 
 class DataKernel():
     def __init__(self, trigno_base):
@@ -116,5 +117,7 @@ class DataKernel():
         
     def close_zmq(self):
         if USE_ZMQ:
+            self.pubsocket.send_pyobj("CLOSE")
+            time.sleep(1)
             self.pubsocket.close()
             self.pubcontext.term()

@@ -5,6 +5,10 @@ See CollectDataController.py for a usage example.
 """
 import numpy as np
 
+USE_ZMQ = True
+
+if USE_ZMQ:
+    import zmq
 
 class DataKernel():
     def __init__(self, trigno_base):
@@ -13,6 +17,10 @@ class DataKernel():
         self.sampleCount = 0
         self.allcollectiondata = [[]]
         self.channel1time = []
+        if USE_ZMQ:
+            self.pubcontext = zmq.Context()
+            self.pubsocket = self.pubcontext.socket(zmq.PUB)
+            self.pubsocket.bind("tcp://127.0.0.1:3420")
 
     def processData(self, data_queue):
         """Processes the data from the DelsysAPI and place it in the data_queue argument"""
@@ -31,6 +39,8 @@ class DataKernel():
                     self.sampleCount += len(outArr[0][0])
                 except:
                     pass
+                if USE_ZMQ:
+                    self.pubsocket.send_pyobj(outArr)
             except IndexError:
                 pass
 
@@ -54,6 +64,8 @@ class DataKernel():
                     self.sampleCount += len(outArr[0][0])
                 except:
                     pass
+                if USE_ZMQ:
+                    self.pubsocket.send_pyobj(outArr)
             except IndexError:
                 pass
 
@@ -101,3 +113,8 @@ class DataKernel():
             return outArr
         else:
             return None
+        
+    def close_zmq(self):
+        if USE_ZMQ:
+            self.pubsocket.close()
+            self.pubcontext.term()
